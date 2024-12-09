@@ -8,6 +8,7 @@ homepage = "https://solana.com/"
 keywords = ["BPF", "eBPF", "interpreter", "JIT", "filtering"]
 license = "Apache-2.0"
 edition = "2018"
+default-run = "solana-rbpf"
 
 include = [
     "src/**",
@@ -48,3 +49,7 @@ shuttle-test = ["dep:shuttle"]
 elf = "0.0.10"
 json = "0.12"
 test_utils = { path = "test_utils/" }
+
+[[bin]]
+name = "solana-rbpf"
+path = "src/main.rs"

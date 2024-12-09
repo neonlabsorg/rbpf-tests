@@ -183,6 +183,24 @@ impl<'a, 'b, C: ContextObject> Interpreter<'a, 'b, C> {
         let dst = insn.dst as usize;
         let src = insn.src as usize;
 
+        // Print the opcode being executed
+        println!(
+            "Executing Opcode: 0x{:02x}, PC: 0x{:x}, Dst: {}, Src: {}, Imm: {}",
+            insn.opc, self.reg[11], dst, src, insn.imm
+        );
+
+        if insn.imm.eq(&544561597){
+            println!(
+                "CALL_IMM: PC=0x{:x}, IMM=0x{:x}, SBPF Version={:?}",
+                self.reg[11], insn.imm, self.executable.get_sbpf_version()
+            );
+            println!(
+                "Function Registry Entry for IMM=0x{:08x}: {:?}",
+                insn.imm,
+                self.executable.get_function_registry().lookup_by_key(insn.imm as u32)
+            );
+        }
+
         if config.enable_instruction_tracing {
             self.vm.context_object_pointer.trace(self.reg);
         }
