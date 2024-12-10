@@ -1,23 +1,20 @@
-use solana_rbpf::{
+pub use solana_rbpf::{
     aligned_memory::AlignedMemory,
     ebpf,
     elf::Executable,
     memory_region::{MemoryMapping, MemoryRegion},
     program::{BuiltinProgram, FunctionRegistry},
     verifier::RequisiteVerifier,
-    vm::{EbpfVm, TestContextObject},
+    vm::{TestContextObject},
 };
+
 use std::{env, fs, sync::Arc};
 use solana_rbpf::error::StableResult;
+use solana_rbpf::jit::JitCompiler;
 use solana_rbpf::vm::Config;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    /*if args.len() < 2 {
-        eprintln!("Usage: {} <path_to_program.so>", args[0]);
-        return;
-    }*/
-    //let so_path = &args[1];
     let so_path = "dumped_program.so";
 
     let so_bytes = match fs::read(so_path) {
@@ -36,7 +33,7 @@ fn main() {
     };
 
     // Create a FunctionRegistry with the correct type signature
-    let function_registry = FunctionRegistry::<for<'a> fn(*mut EbpfVm<'a, _>, u64, u64, u64, u64, u64)>::default();
+    let function_registry = FunctionRegistry::<for<'a> fn(*mut TestContextObject, u64, u64, u64, u64, u64)>::default();
 
     // Create the loader with the proper function registry
     let loader = Arc::new(BuiltinProgram::new_loader(config, function_registry));
@@ -82,10 +79,30 @@ fn main() {
         }
     };
 
-    let mut context_object = TestContextObject::new(10_000); // Increased CUs limit
-    let mut vm = EbpfVm::new(loader, sbpf_version, &mut context_object, memory_mapping, stack_len);
+    // Compile the program using JIT
+    let mut jit_compiler = match JitCompiler::new(&executable) {
+        Ok(jit) => jit,
+        Err(err) => {
+            eprintln!("Failed to create JIT compiler: {}", err);
+            return;
+        }
+    };
 
-    let (instruction_count, result) = vm.execute_program(&executable, true);
+    let compiled_program = match jit_compiler.compile() {
+        Ok(prog) => prog,
+        Err(err) => {
+            eprintln!("JIT compilation failed: {}", err);
+            return;
+        }
+    };
+
+    // Execute the JIT-compiled program
+    let mut context_object = TestContextObject::new(10_000); // Increased CUs limit
+    let (instruction_count, result) = compiled_program.execute_program(
+        &memory_mapping,
+        &mut context_object,
+        true,
+    );
 
     match result {
         StableResult::Ok(exit_code) => {

@@ -39,7 +39,7 @@ pub mod fuzz;
 pub mod insn_builder;
 pub mod interpreter;
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
-mod jit;
+pub mod jit;
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
 mod memory_management;
 pub mod memory_region;
@@ -48,6 +48,7 @@ pub mod static_analysis;
 pub mod syscalls;
 pub mod verifier;
 pub mod vm;
+pub mod jit;
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
 mod x86;
 
