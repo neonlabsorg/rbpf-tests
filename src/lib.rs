@@ -48,7 +48,6 @@ pub mod static_analysis;
 pub mod syscalls;
 pub mod verifier;
 pub mod vm;
-pub mod jit;
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
 mod x86;
 
