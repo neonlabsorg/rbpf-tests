@@ -197,7 +197,8 @@ impl<'a, 'b, C: ContextObject> Interpreter<'a, 'b, C> {
             println!(
                 "Function Registry Entry for IMM=0x{:08x}: {:?}",
                 insn.imm,
-                self.executable.get_function_registry().lookup_by_key(insn.imm as u32)
+                //self.executable. get_function_registry().lookup_by_key(insn.imm as u32)
+                self.executable.get_loader().get_function_registry(self.executable.get_sbpf_version()).lookup_by_key(insn.imm as u32)
             );
         }
 

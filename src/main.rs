@@ -36,10 +36,14 @@ fn main() {
     };
 
     // Create a FunctionRegistry with the correct type signature
-    let function_registry = FunctionRegistry::<for<'a> fn(*mut EbpfVm<'a, _>, u64, u64, u64, u64, u64)>::default();
+    let mut function_registry = FunctionRegistry::<for<'a> fn(*mut EbpfVm<'a, _>, u64, u64, u64, u64, u64)>::default();
+
+    function_registry.register_function_hashed(b"sol_log_", my_sol_log_stub).unwrap();
+
 
     // Create the loader with the proper function registry
     let loader = Arc::new(BuiltinProgram::new_loader(config, function_registry));
+
 
     let executable = match Executable::<TestContextObject>::from_elf(
         &so_bytes,
@@ -97,4 +101,30 @@ fn main() {
             eprintln!("Program execution failed: {}", err);
         }
     }
+}
+
+fn my_sol_log_stub(
+    vm_ptr: *mut EbpfVm<TestContextObject>,
+    arg1: u64,
+    arg2: u64,
+    arg3: u64,
+    arg4: u64,
+    arg5: u64,
+) {
+    // Minimal example:
+    // 1. We might want to get a reference to the VM or its config:
+    let vm = unsafe { vm_ptr.as_mut() }.expect("VM pointer is null");
+    // 2. We can do anything we like here (log, read memory, etc.)
+    println!(
+        "[my_sol_log_stub] Called with arguments: {}, {}, {}, {}, {}",
+        arg1, arg2, arg3, arg4, arg5
+    );
+
+    // If you want to signal an error to the BPF code, set `vm.program_result = Err(...)`.
+    // For a normal success, do nothing more.
+
+    // Real Solana might read the string from BPF memory. For that, you'd do something like:
+    // let memory = &mut vm.memory_mapping;
+    // read some bytes from memory at arg1...
+    // println!("log msg: {:?}", message);
 }
